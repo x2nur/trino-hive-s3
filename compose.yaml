@@ -38,45 +38,40 @@ services:
     command: ["server", "/data"]
     networks:
       - trino-network
+
+
+  metastore-base:
+    image: my-hive-metastore
+    build: ./metastore
+
       
   metastore-db-init:
-    image: apache/hive:3.1.3
+    image: my-hive-metastore
+    pull_policy: never
     container_name: trino-metastore-db-init
     hostname: metastore-db-init
-    volumes:
-      - ./metastore/init.sh:/init.sh
-    environment:
-      DB_DRIVER: postgres
-      HADOOP_CLIENT_OPTS: '-Xmx1G -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
-                           -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://metastore-db:5432/trino-meta
-                           -Djavax.jdo.option.ConnectionUserName=trino
-                           -Djavax.jdo.option.ConnectionPassword=trino'
-    entrypoint:
-      - bash
-      - /init.sh
+    command: ["/bin/bash", "-c", "/init.sh"]
     networks:
       - trino-network
     depends_on:
       - metastore-db
+      - metastore-base
     profiles:
       - setup
 
   metastore:
-    image: apache/hive:3.1.3
+    image: my-hive-metastore
+    pull_policy: never
     container_name: trino-metastore-hive
     hostname: metastore
-    volumes:
-      - ./metastore/aws-java-sdk-bundle-1.11.271.jar:/opt/hive/lib/aws-java-sdk-bundle-1.11.271.jar
-      - ./metastore/hadoop-aws-3.1.0.jar:/opt/hive/lib/hadoop-aws-3.1.0.jar
-      - ./metastore/metastore-site.xml:/opt/hive/conf/metastore-site.xml
+    command: ["/bin/bash", "-c", "/entrypoint.sh"]
     environment:
-      SERVICE_NAME: metastore
       IS_RESUME: 'true'
-      DB_DRIVER: postgres
     networks: 
       - trino-network
     depends_on:
       - metastore-db
+      - metastore-base
       - s3
 
   trino:
@@ -91,4 +86,3 @@ services:
       - trino-network
     depends_on:
       - metastore
-      - s3
