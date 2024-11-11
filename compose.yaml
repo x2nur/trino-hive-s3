@@ -94,3 +94,5 @@ services:
     networks:
       - trino-network
     entrypoint: []
+    profiles:
+      - client
