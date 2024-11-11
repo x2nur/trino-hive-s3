@@ -86,3 +86,11 @@ services:
       - trino-network
     depends_on:
       - metastore
+
+  client:
+    image: trinodb/trino:434
+    container_name: trino-client
+    hostname: trino-client   
+    networks:
+      - trino-network
+    entrypoint: []
